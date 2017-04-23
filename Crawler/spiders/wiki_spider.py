@@ -7,7 +7,7 @@ from Crawler.util import *
 forbs = ["File:", "Template:", "Wikipedia:", "#", "Help:", "Category:", "(disambiguation)"]
 
 class WikiSpider(scrapy.Spider):
-    name = "wiki"
+    name = "Wiki"
 
     class PageNode:
         def __init__(self, link, prev):
