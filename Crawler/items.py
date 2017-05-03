@@ -11,3 +11,7 @@ import scrapy
 class LinkItem(scrapy.Item):
     name = scrapy.Field()
     links = scrapy.Field()
+
+class TextItem(scrapy.Item):
+    link = scrapy.Field()
+    text = scrapy.Field()

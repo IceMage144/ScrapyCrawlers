@@ -6,8 +6,8 @@ from Crawler.util import *
 
 forbs = ["File:", "Template:", "Wikipedia:", "#", "Help:", "Category:", "(disambiguation)"]
 
-class WikiSpider(scrapy.Spider):
-    name = "Wiki"
+class Wiki1Spider(scrapy.Spider):
+    name = "Wiki1"
 
     class PageNode:
         def __init__(self, link, prev):
@@ -20,24 +20,19 @@ class WikiSpider(scrapy.Spider):
         self.queue = []
         self.prev = None
         self.finishSite = None
+        self.startSite = None
+        self.stack = None
 
     def start_requests(self):
-        startSite = input(Color("Enter the starting site:\n", 33))
+        self.startSite = input(Color("Enter the starting site:\n", 33))
         self.finishSite = input(Color("Enter the finishing site:\n", 33))
-        if not (isAnWikiSite(startSite) and isAnWikiSite(self.finishSite)):
+        if not (isAnWikiSite(self.startSite) and isAnWikiSite(self.finishSite)):
             print(Color("One or more of the sites entered aren't from wikipedia!", 31))
+            return
         self.finishSite = getName(self.finishSite)
-        self.prev = self.PageNode(getName(startSite), None)
+        self.prev = self.PageNode(getName(self.startSite), None)
         self.linksDic[self.prev.link] = False
-        try:
-            req = requests.get(startSite)
-            if req.status_code == 200:
-                print(Color(f"Searching at {startSite}", 32))
-                yield scrapy.Request(url=startSite, callback=self.parse)
-            else:
-                print(Color(f"Can't connect to {startSite}", 31))
-        except requests.exceptions.ConnectionError:
-            print(Color(f"Can't connect to {startSite}", 31))
+        yield getRequest(self.startSite, self.parse)
 
     def parse(self, response):
         found = False
@@ -63,26 +58,11 @@ class WikiSpider(scrapy.Spider):
                 counter += 1
             print(Color(f"Got {counter} entries from database", 34))
             if found:
-                print(Color("=============== Result ===============", 36))
-                stack = [colector]
-                ptr = self.prev
-                while (ptr != None):
-                    stack.insert(0, ptr.link)
-                    ptr = ptr.prev
-                for link in stack:
-                    print(Color(link, 36))
-                print(Color("======================================", 36))
+                self.stack = [colector]
+                yield returnResult(self.stack, self.prev, self.startSite, self.parse_two)
             else:
-                try:
-                    nextSite = f"https://en.wikipedia.org/wiki/{self.prev.link}"
-                    req = requests.get(nextSite)
-                    if req.status_code == 200:
-                        print(Color(f"Searching at {nextSite}", 32))
-                        yield scrapy.Request(url=nextSite, callback=self.parse)
-                    else:
-                        print(Color(f"Can't connect to {nextSite}", 31))
-                except requests.exceptions.ConnectionError:
-                    print(Color(f"Can't connect to {nextSite}", 31))
+                nextSite = f"https://en.wikipedia.org/wiki/{self.prev.link}"
+                yield getRequest(nextSite, self.parse)
         else:
             listLinks = {}
             links = response.xpath('//div[@class="mw-content-ltr"]/p//a/@href').extract() #extracting links
@@ -99,13 +79,8 @@ class WikiSpider(scrapy.Spider):
                     listLinks[link] = False
             yield LinkItem(name=getName(response.url), links=list(listLinks.keys()))
             if found:
-                stack = [colector]
-                ptr = self.prev
-                while (ptr != None):
-                    stack.insert(0, ptr.link)
-                    ptr = ptr.prev
-                for link in stack:
-                    print(Color(link, 36))
+                self.stack = [colector]
+                yield returnResult(self.stack, self.prev, self.start, self.parse_two)
             else:
                 try:
                     tmp = self.queue.pop()
@@ -122,27 +97,15 @@ class WikiSpider(scrapy.Spider):
                 except requests.exceptions.ConnectionError:
                     print(Color(f"Can't connect to {nextSite}", 31))
 
-def isAnWikiSite(string):
-    return (re.search("https://en.wikipedia.org/wiki/", string) != None)
-
-def getName(url):
-    return url.split("/")[-1]
-
-def haveForbs(string):
-    res = False
-    for forb in forbs:
-        if re.search(forb, string) != None:
-            res = True
-    return res
-
-
-#def justify(text):
-#    words = list(filter(None, text.split(" ")))
-#    lines = []
-#    for i in range(0, len(words), 15):
-#        arr = []
-#        for j in range(15):
-#            if (i+j < len(words)):
-#                arr.append(words[i+j])
-#        lines.append(" ".join(arr))
-#    return "\n".join(lines)
+    def parse_two(self, response):
+        print(Color(f"Retrieving paragraph from {self.stack[0]}", 34))
+        word = response.xpath(f"//div[@class='mw-content-ltr']/p//a[@href='/wiki/{self.stack[1]}'][1]/text()").extract()[0]
+        par = response.xpath(f"//div[@class='mw-content-ltr']/p[a/@href='/wiki/{self.stack[1]}'][1]").extract()[0]
+        par = re.sub("<.*?>|\{.*?\}|\[.*?\]", "", par)
+        match = re.search(f"\\b{word}\\b", par)
+        par = par[:match.start()] + Color(word, 36) + par[match.end():]
+        print(par)
+        self.stack.remove(self.stack[0])
+        if len(self.stack) <= 1:
+            yield None
+        yield scrapy.Request(url=f"https://en.wikipedia.org/wiki/{self.stack[0]}", callback=self.parse_two)

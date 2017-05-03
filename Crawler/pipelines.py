@@ -9,6 +9,7 @@
 from scrapy import signals
 from scrapy.exporters import JsonLinesItemExporter
 from Crawler.util import *
+import re
 
 class JsonLinesExportPipeline(object):
 
@@ -23,7 +24,7 @@ class JsonLinesExportPipeline(object):
         return pipeline
 
     def spider_opened(self, spider):
-        file = open(f'{spider.name}_products.jl', 'w+b')
+        file = open(f'{spider.name}_articles.jl', 'w+b')
         self.files[spider] = file
         self.exporter = JsonLinesItemExporter(file)
         self.exporter.start_exporting()
@@ -32,7 +33,8 @@ class JsonLinesExportPipeline(object):
         self.exporter.finish_exporting()
         file = self.files.pop(spider)
         file.close()
-        convert(spider.name)
+        if re.search("Wiki", spider.name) != None:
+            convert(spider.name)
 
     def process_item(self, item, spider):
         self.exporter.export_item(item)

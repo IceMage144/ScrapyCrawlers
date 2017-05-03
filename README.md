@@ -2,7 +2,8 @@
 
 ## Available crawlers
 
-* Wiki: A crawler that finds the conection between two wikipedia articles
+* Wiki(1/2): A crawler that finds the conection between two wikipedia articles
+* Text: A crawler that extracts the text from an wikipedia article
 
 ## Dictionaries
 
