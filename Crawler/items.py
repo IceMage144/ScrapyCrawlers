@@ -15,3 +15,7 @@ class LinkItem(scrapy.Item):
 class TextItem(scrapy.Item):
     link = scrapy.Field()
     text = scrapy.Field()
+
+class WordItem(scrapy.Item):
+    word = scrapy.Field()
+    pos = scrapy.Field()

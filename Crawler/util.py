@@ -1,5 +1,7 @@
 import json
 import re
+import requests
+import scrapy
 from pathlib import Path
 
 def loadDatabase(name):
@@ -28,14 +30,19 @@ def convert(name):
     with open(original) as f:
         k = f.readlines()
     print(Color("Converting new itens...", 33))
-    dic["!!Number_Of_Entries!!"] = 0
+    #del dic["Unsupported titles/Colon"]
+    #if dic.get("Unsupported titles/Colon") == None:
+    #    print("Success!!")
     for line in k:
         entry = json.loads(line)
-        dic[entry["name"]] = entry["links"]
+        if "Wiki" in name:
+            dic[entry["name"]] = entry["links"]
+        elif "Dict" in name:
+            dic[entry["word"]] = entry["pos"]
     dic["!!Number_Of_Entries!!"] = len(dic)-1
     print(Color("Finish converting", 32))
     with open(newName, "w+") as f:
-        f.write(json.dumps(dic, sort_keys=True, indent=1))
+        f.write(json.dumps(dic, sort_keys=True, separators=(",\n", ":")))
         print(Color("Saved database", 32))
 
 def Color(string, num):
@@ -43,6 +50,9 @@ def Color(string, num):
 
 def isAnWikiSite(string):
     return (re.search("https://en.wikipedia.org/wiki/", string) != None)
+
+def isAnWiktSite(string):
+    return (re.search("https://en.wiktionary.org/wiki/", string) != None)
 
 def returnResult(stack, prev, site, callback):
     print(Color("=============== Result ===============", 36))

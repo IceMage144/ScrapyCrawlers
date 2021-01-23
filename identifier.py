@@ -1,4 +1,5 @@
 import json
+import sys
 
 ignoredChars = [",", ":", ";", "-", "!", "?", "\'", "’", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "`", "/", ".", "\"", "(", ")", "”", "\n", "“"]
 
@@ -23,6 +24,7 @@ def analizeFile(d):
 
 def analizeWord(d):
     word = "o"
+    print("Input '-1' to stop")
     while word != "-1":
         word = input("Input an word to search:\n")
         if (d.get(word) == None):
@@ -32,6 +34,7 @@ def analizeWord(d):
 
 def searchWord(d):
     word = "o"
+    print("Input '-1' to stop")
     while word != "-1":
         word = input("Input an word to search:\n")
         g = d.get(word)
@@ -41,11 +44,12 @@ def searchWord(d):
             print(g)
 
 def main():
+    try:
+        name = sys.argv[1]
+    except IndexError:
+        print("Usage: identifier <dict file>")
     print("Exporting dictionary...")
-    with open("dictionary.json", "r") as f:
-        k = f.readlines()
-    k = "".join(k).replace("\n", "")
-    d = json.loads(k)
+    d = json.load(open(name))
     print("Dictionary exported successfuly!")
     action = input("analize file (f) or have words (h) or search definitions (d)?")
     if action == "f":

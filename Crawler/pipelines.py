@@ -33,7 +33,7 @@ class JsonLinesExportPipeline(object):
         self.exporter.finish_exporting()
         file = self.files.pop(spider)
         file.close()
-        if re.search("Wiki", spider.name) != None:
+        if "Text" not in spider.name:
             convert(spider.name)
 
     def process_item(self, item, spider):

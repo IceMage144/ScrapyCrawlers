@@ -18,8 +18,5 @@ https://docs.python.org/3/library/json.html
 https://www.wordsapi.com/
 https://doc.scrapy.org/en/latest/topics/selectors.html
 http://www.thesaurus.com/
-filename = 'wikipedia%s.txt' % response.url.split("/")[-1]
-text = "".join(response.css("div.mw-content-ltr p").extract())  #extracting <p>s
-text = re.sub("(<.*?>)|(\[.*?\])|(\{.*?\})", "", text) #extracting text
-text = justify(text)
+https://en.wiktionary.org/wiki/Wiktionary:Main_Page
 -->
